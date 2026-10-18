@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToMaTe - Hệ Thống Trải Nghiệm Sách Ảo 360° Cho Trẻ Em</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tomato: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              400: '#fb7185',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+            }
+          },
+          fontFamily: {
+            sans: ['Nunito', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #FFF8F0;
+      color: #334155;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #f43f5e;
+      border-radius: 4px;
+    }
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    .hotspot-pulse {
+      animation: pulse-slow 2s infinite ease-in-out;
+    }
+    .reader-canvas {
+      cursor: grab;
+    }
+    .reader-canvas:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- ================================================================= -->
+  <!-- TOP GLOBAL HEADER & PORTAL SWITCHER                               -->
+  <!-- ================================================================= -->
+  <header class="bg-white border-b border-rose-100 shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchPortal('parent')">
+        <div class="w-10 h-10 bg-tomato-500 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-md shadow-tomato-200">
+          🍅
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xl font-black tracking-tight text-tomato-600">ToMaTe</span>
+            <span class="text-[10px] text-amber-800 bg-amber-100 font-extrabold px-2 py-0.5 rounded-full">Sách Ảo 360°</span>
+          </div>
+          <p class="text-[10px] text-slate-500 font-semibold hidden md:block">Mở một trang sách - Bước vào cả thế giới</p>
+        </div>
+      </div>
+
+      <!-- Main Portal Switcher (3 Distinct Roles) -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-bold">
+        <button onclick="switchPortal('parent')" id="btn-portal-parent" class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-white text-tomato-600 shadow-sm">
+          <i class="fa-solid fa-users-between-lines"></i>
+          <span>1. Cổng Phụ Huynh & Trẻ Em</span>
+        </button>
+        <button onclick="switchPortal('supplier')" id="btn-portal-supplier" class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-building-user"></i>
+          <span>2. Cổng Nhà Cung Cấp (B2B)</span>
+        </button>
+        <button onclick="switchPortal('admin')" id="btn-portal-admin" class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <i class="fa-solid fa-sliders"></i>
+          <span>3. Cổng Quản Trị Admin</span>
+        </button>
+      </div>
+
+      <!-- Quick Process Map Trigger -->
+      <button onclick="toggleFlowchartModal()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+        <i class="fa-solid fa-diagram-project"></i>
+        <span class="hidden sm:inline">Sơ Đồ Quy Trình HT (29 Tác Vụ)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- MAIN WORKSPACE                                                    -->
+  <!-- ================================================================= -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+    <!-- ================================================================= -->
+    <!-- PORTAL 1: CỔNG PHỤ HUYNH & TRẺ EM                                 -->
+    <!-- ================================================================= -->
+    <div id="portal-parent" class="space-y-6">
+
+      <!-- Parent Sub-Header & Mode Switcher -->
+      <div id="parent-sub-bar" class="bg-gradient-to-r from-rose-500 to-amber-500 rounded-2xl p-4 text-white shadow-lg flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+            👩‍👦
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="font-black text-lg">Chào buổi tối, Lan Anh!</h2>
+              <span id="active-child-badge" class="bg-white/30 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">Đang chọn: Bé An (6 tuổi)</span>
+            </div>
+            <p class="text-xs text-rose-100">Gói dịch vụ: <strong class="underline">PRO Toàn Thư Viện</strong> (13/10 - 12/11/2026)</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+          <button onclick="openParentAuthModal('register')" class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-xl transition">
+            <i class="fa-solid fa-user-plus mr-1"></i> Đăng Ký PH (Cổng Riêng)
+          </button>
+          <button onclick="openParentAuthModal('login')" class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded-xl transition">
+            <i class="fa-solid fa-right-to-bracket mr-1"></i> Đăng Nhập
+          </button>
+          <button onclick="enterChildMode()" class="bg-white text-tomato-600 hover:bg-rose-50 px-4 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 font-extrabold">
+            <i class="fa-solid fa-gamepad text-sm"></i>
+            <span>Vào Chế Độ Trẻ Em (Đọc Sách 360°)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Parent Dashboard Tabs -->
+      <div id="parent-dashboard-view" class="space-y-6">
+        <div class="flex border-b border-slate-200 text-sm font-bold gap-4 overflow-x-auto">
+          <button onclick="switchParentTab('overview')" id="tab-parent-overview" class="pb-3 border-b-2 border-tomato-600 text-tomato-600 flex items-center gap-2">
+            <i class="fa-solid fa-house"></i> Tổng Quan Gia Đình
+          </button>
+          <button onclick="switchParentTab('profiles')" id="tab-parent-profiles" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-child-reaching"></i> Tạo & Quản Lý Hồ Sơ Trẻ
+          </button>
+          <button onclick="switchParentTab('timer')" id="tab-parent-timer" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i> Bật Giới Hạn Thời Gian
+          </button>
+          <button onclick="switchParentTab('plans')" id="tab-parent-plans" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-store"></i> Đăng Ký / Mua Gói Dịch Vụ
+          </button>
+          <button onclick="switchParentTab('analytics')" id="tab-parent-analytics" class="pb-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line"></i> Báo Cáo Lịch Sử & Feedback
+          </button>
+        </div>
+
+        <!-- TAB 1: OVERVIEW -->
+        <div id="sec-parent-overview" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 space-y-6">
+            <!-- Active Profile Card -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-extrabold text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-face-smile text-amber-500 text-lg"></i>
+                  Hôm nay ai sẽ khám phá?
+                </h3>
+                <span class="text-xs text-slate-500 font-medium">Tối đa 3 hồ sơ trẻ</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Profile 1: An -->
+                <div class="border-2 border-tomato-500 bg-rose-50/50 p-4 rounded-xl flex items-start gap-3 relative">
+                  <div class="w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center text-2xl shadow-sm">👦</div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-bold text-slate-900">Bé An (6 tuổi)</h4>
+                      <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">Đang chọn</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">Sở thích: Khủng long, Khoa học</p>
+                    <p class="text-xs font-bold text-tomato-600 mt-2">Đã đọc hôm nay: 15 / 60 phút</p>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+                      <div class="bg-tomato-500 h-full w-1/4"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Profile 2: Bông -->
+                <div class="border border-slate-200 bg-white p-4 rounded-xl flex items-start gap-3">
+                  <div class="w-12 h-12 bg-rose-300 rounded-full flex items-center justify-center text-2xl shadow-sm">👧</div>
+                  <div class="flex-grow">
+                    <div class="flex items-center justify-between">
+                      <h4 class="font-bold text-slate-900">Bé Bông (4 tuổi)</h4>
+                      <span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded">Tắt giới hạn</span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">Sở thích: Động vật, Cổ tích</p>
+                    <button onclick="selectActiveChild('Bé Bông')" class="mt-3 text-xs text-tomato-600 font-bold hover:underline">Chuyển sang Bông →</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recommended Books List -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-extrabold text-slate-800">Kho Sách Gợi Ý Trong Thư Viện</h3>
+                <span class="text-xs text-tomato-600 font-bold cursor-pointer hover:underline">Xem tất cả 100+ sách</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Book 1 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition">
+                  <div class="h-28 bg-emerald-800 relative flex items-center justify-center text-white overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="Khủng long">
+                    <span class="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">PRO</span>
+                  </div>
+                  <div class="p-3">
+                    <h4 class="font-bold text-xs text-slate-900 line-clamp-1">Khủng long & Thế giới cổ đại</h4>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Khoa học • 6-9 tuổi • 5 cảnh</p>
+                    <button onclick="launchBookPreview('Khủng long & Thế giới cổ đại')" class="w-full mt-2 bg-tomato-50 hover:bg-tomato-100 text-tomato-600 font-bold text-xs py-1.5 rounded-lg transition">
+                      Xem Xem Thử (Preview)
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Book 2 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition">
+                  <div class="h-28 bg-amber-700 relative flex items-center justify-center text-white overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="Động vật">
+                    <span class="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FREE</span>
+                  </div>
+                  <div class="p-3">
+                    <h4 class="font-bold text-xs text-slate-900 line-clamp-1">Thế giới động vật hoang dã</h4>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Thiên nhiên • 3-5 tuổi • 4 cảnh</p>
+                    <button onclick="launchBookPreview('Thế giới động vật hoang dã')" class="w-full mt-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-1.5 rounded-lg transition">
+                      Trải nghiệm Free
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Book 3 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden group hover:shadow-md transition">
+                  <div class="h-28 bg-indigo-900 relative flex items-center justify-center text-white overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="Lâu đài">
+                    <span class="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">PRO</span>
+                  </div>
+                  <div class="p-3">
+                    <h4 class="font-bold text-xs text-slate-900 line-clamp-1">Công chúa & Lâu đài phép thuật</h4>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Cổ tích • 6-9 tuổi • 6 cảnh</p>
+                    <button onclick="launchBookPreview('Công chúa & Lâu đài phép thuật')" class="w-full mt-2 bg-tomato-50 hover:bg-tomato-100 text-tomato-600 font-bold text-xs py-1.5 rounded-lg transition">
+                      Xem Xem Thử (Preview)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subscription Status & PIN Code Settings -->
+          <div class="space-y-6">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <h3 class="font-extrabold text-slate-800 text-sm">Gói Dịch Vụ Đang Hoạt Động</h3>
+              <div class="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-black text-amber-800 text-sm">PRO TOÀN THƯ VIỆN</span>
+                  <span class="text-xs bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded">199.000đ/tháng</span>
+                </div>
+                <p class="text-xs text-amber-700">Đã mở tất cả sách Pro & Free. Không tự động gia hạn.</p>
+                <div class="pt-2 border-t border-amber-200/60 flex items-center justify-between text-xs">
+                  <span class="text-slate-600">Thời hạn: 13/10 - 12/11/2026</span>
+                  <button onclick="switchParentTab('plans')" class="text-tomato-600 font-bold hover:underline">Gia hạn ngay</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- PIN Code Settings -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-lock text-tomato-500"></i>
+                Bảo Vệ PIN Phụ Huynh
+              </h3>
+              <p class="text-xs text-slate-500">Mã PIN 4 số bảo vệ việc mua sách, đổi cài đặt và thoát chế độ trẻ em.</p>
+              <div class="flex items-center gap-2">
+                <input type="password" value="1234" readonly class="w-24 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-lg text-center font-bold text-sm tracking-widest">
+                <button onclick="alert('Đã gửi hướng dẫn khôi phục PIN đến email lananh@example.com')" class="text-xs bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-bold text-slate-700 transition">
+                  Đổi PIN
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: CREATE PROFILES (Tác vụ 11) -->
+        <div id="sec-parent-profiles" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div class="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <div>
+              <h3 class="font-extrabold text-slate-900 text-lg">Tạo Hồ Sơ Trẻ Em Mới (Tác vụ 11)</h3>
+              <p class="text-xs text-slate-500">Nhập thông tin cơ bản và sở thích để hệ thống cá nhân hóa gợi ý sách phù hợp.</p>
+            </div>
+            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">Đã dùng 2 / 3 hồ sơ</span>
+          </div>
+
+          <form onsubmit="handleCreateProfile(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <h4 class="font-bold text-sm text-tomato-600 flex items-center gap-2">
+                <span class="w-5 h-5 bg-tomato-500 text-white rounded-full flex items-center justify-center text-xs">1</span>
+                Thông Tin Cơ Bản
+              </h4>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tên biệt danh của bé *</label>
+                <input type="text" id="prof-name" placeholder="Ví dụ: Bé An, Bé Bông..." required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-tomato-500 outline-none">
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Ngày sinh *</label>
+                  <input type="date" id="prof-dob" value="2020-05-12" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nhóm tuổi phù hợp</label>
+                  <select id="prof-age-group" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm outline-none">
+                    <option value="3-5">3 - 5 tuổi (Mầm non)</option>
+                    <option value="6-9" selected>6 - 9 tuổi (Tiểu học)</option>
+                    <option value="10-12">10 - 12 tuổi (Thiếu niên)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Hình đại diện (Avatar)</label>
+                <div class="flex items-center gap-3">
+                  <label class="cursor-pointer border-2 border-tomato-500 rounded-full p-1"><input type="radio" name="avatar" value="👦" checked class="hidden"><span class="text-3xl">👦</span></label>
+                  <label class="cursor-pointer border border-slate-200 rounded-full p-1"><input type="radio" name="avatar" value="👧" class="hidden"><span class="text-3xl">👧</span></label>
+                  <label class="cursor-pointer border border-slate-200 rounded-full p-1"><input type="radio" name="avatar" value="🦁" class="hidden"><span class="text-3xl">🦁</span></label>
+                  <label class="cursor-pointer border border-slate-200 rounded-full p-1"><input type="radio" name="avatar" value="🦖" class="hidden"><span class="text-3xl">🦖</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <h4 class="font-bold text-sm text-tomato-600 flex items-center gap-2">
+                <span class="w-5 h-5 bg-tomato-500 text-white rounded-full flex items-center justify-center text-xs">2</span>
+                Sở Thích & Mục Tiêu
+              </h4>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Chủ đề bé thích</label>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <label class="bg-rose-50 border border-tomato-300 text-tomato-700 px-3 py-1.5 rounded-lg cursor-pointer font-bold"><input type="checkbox" checked class="mr-1"> Khủng long</label>
+                  <label class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"><input type="checkbox" checked class="mr-1"> Khoa học</label>
+                  <label class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"><input type="checkbox" class="mr-1"> Động vật</label>
+                  <label class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg cursor-pointer"><input type="checkbox" class="mr-1"> Cổ tích</label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Mục tiêu phát triển cho bé</label>
+                <select id="prof-goal" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm outline-none">
+                  <option value="Tăng vốn từ & Quan sát">Tăng vốn từ & Rèn luyện quan sát</option>
+                  <option value="Mở rộng kiến thức khoa học">Mở rộng kiến thức khoa học & Logic</option>
+                  <option value="Thói quen đọc sách mỗi ngày">Tạo thói quen đọc sách tự giác mỗi ngày</option>
+                </select>
+              </div>
+
+              <div class="pt-4 flex items-center gap-3">
+                <button type="submit" class="bg-tomato-600 hover:bg-tomato-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm shadow-md transition">
+                  Hoàn Tất Hồ Sơ
+                </button>
+                <button type="button" onclick="switchParentTab('overview')" class="text-xs text-slate-500 hover:text-slate-800 font-bold">Hủy bỏ</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- TAB 3: TIME LIMIT CONTROLS (Tác vụ 14) -->
+        <div id="sec-parent-timer" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-extrabold text-slate-900 text-lg">Bật/Tắt Giới Hạn Thời Gian Sử Dụng (Tác vụ 14)</h3>
+            <p class="text-xs text-slate-500">Giới hạn thời gian tính theo ngày, giúp trẻ sử dụng thiết bị lành mạnh.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- An Settings -->
+            <div class="border border-slate-200 p-5 rounded-2xl space-y-4 bg-slate-50/50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">👦</span>
+                  <div>
+                    <h4 class="font-extrabold text-slate-900 text-sm">Bé An (6 tuổi)</h4>
+                    <p class="text-[11px] text-slate-500">Đã dùng hôm nay: 15 / 60 phút</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="timer-toggle-an" checked onchange="toggleTimerState('an')" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tomato-600"></div>
+                </label>
+              </div>
+
+              <div id="timer-options-an" class="space-y-3 pt-2">
+                <label class="block text-xs font-bold text-slate-700">Chọn thời lượng tối đa mỗi ngày:</label>
+                <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                  <button type="button" onclick="setTimerMinutes('an', 15)" class="py-2 border border-slate-300 rounded-lg hover:border-tomato-500 font-bold">15 phút</button>
+                  <button type="button" onclick="setTimerMinutes('an', 30)" class="py-2 border border-slate-300 rounded-lg hover:border-tomato-500 font-bold">30 phút</button>
+                  <button type="button" onclick="setTimerMinutes('an', 60)" class="py-2 border-2 border-tomato-500 bg-tomato-50 text-tomato-600 rounded-lg font-black">60 phút</button>
+                  <button type="button" onclick="setTimerMinutes('an', 90)" class="py-2 border border-slate-300 rounded-lg hover:border-tomato-500 font-bold">90 phút</button>
+                </div>
+
+                <div class="pt-2">
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Khung giờ được phép đọc sách:</label>
+                  <div class="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200 space-y-1">
+                    <div class="flex justify-between"><span>Thứ 2 - Thứ 6:</span> <span class="font-bold">18:00 → 20:00</span></div>
+                    <div class="flex justify-between"><span>Cuối tuần:</span> <span class="font-bold">09:00 → 11:00 & 18:00 → 20:00</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bông Settings -->
+            <div class="border border-slate-200 p-5 rounded-2xl space-y-4 bg-slate-50/50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">👧</span>
+                  <div>
+                    <h4 class="font-extrabold text-slate-900 text-sm">Bé Bông (4 tuổi)</h4>
+                    <p class="text-[11px] text-slate-500">Trạng thái: Đang TẮT giới hạn</p>
+                  </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="timer-toggle-bong" onchange="toggleTimerState('bong')" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tomato-600"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-500">Khi TẮT giới hạn, màn hình trẻ em sẽ không hiện đồng hồ đếm ngược.</p>
+            </div>
+          </div>
+
+          <button onclick="alert('Đã lưu cấu hình giới hạn thời gian!')" class="bg-tomato-600 hover:bg-tomato-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-sm transition">
+            Lưu Thiết Lập Giới Hạn
+          </button>
+        </div>
+
+        <!-- TAB 4: PLANS & ONLINE PAYMENT (Tác vụ 12 & 13) -->
+        <div id="sec-parent-plans" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center max-w-3xl mx-auto space-y-2">
+            <h3 class="font-black text-slate-900 text-xl">Lựa Chọn Nội Dung & Gói Dịch Vụ
